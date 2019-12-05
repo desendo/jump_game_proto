@@ -13,10 +13,6 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float targetHorizontalDistance = 1f;    
     [SerializeField] private float horizontalDistanceMin = 1f;
 
-    internal void SetHorizontalDistance(object p)
-    {
-        throw new NotImplementedException();
-    }
 
     [SerializeField] private float horizontalDistanceMax = 1f;    
     [SerializeField] private float targetVerticalDistance = 1f;
