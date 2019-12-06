@@ -28,4 +28,3 @@ public class SceneLoaderProxy : MonoBehaviour
 
 }
 
-public struct SignalLoaderProgress{ public float progress; public bool isComplete; }

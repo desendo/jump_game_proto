@@ -14,6 +14,6 @@ public void HandleSignal(SignalLoaderProgress arg)
 
     private void UpdateLoadProgress(float progress)
     {
-        progressText.text = "Loadin " + ((int)(progress * 100)).ToString() + "%";
+        progressText.text = "Loading " + ((int)(progress * 100)).ToString() + "%";
     }
 }

@@ -3,68 +3,95 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IReceive<SignalControlEnabled>, IReceive<SignalPlayerSpawned>
 {
 
-    [SerializeField] CharacterController characterMotor;
-    [SerializeField] CameraFollow cameraFollow;
+    [SerializeField] CharController characterMotor;
     [SerializeField] float distanceChangeSpeed;
     [Header("Projection Line Settings")]
     [SerializeField] LineRenderer projectionLine;
     [SerializeField] Vector3 projectionLineOffset;
-    [SerializeField] Color colorHitted;
-    [SerializeField] Color colorNotHitted;
-    [SerializeField] LayerMask  whatIsProjectionLineTargets;
+    [SerializeField] Color colorProjectionHitted;
+    [SerializeField] Color colorProjectionNotHitted;
+    [SerializeField] LayerMask  whatIsProjectionTargets;
     [SerializeField] Transform projectionSpot;
     private Transform playerCharacterTransform;
-    private void Awake()
+    private bool controlsEnabled;
+
+    private void Init(CharController characterController)
     {
+        characterMotor = characterController;
         playerCharacterTransform = characterMotor.transform;
     }
     void Update()
     {
-        cameraFollow.SetCameraDistance(Input.mouseScrollDelta.y * distanceChangeSpeed);
-        
-        if (Input.GetKey(KeyCode.W))
-        {
-            characterMotor.MoveForward();
-        }
+        if (characterMotor == null) return;
 
-        if (Input.GetKey(KeyCode.A))
-        {
-            characterMotor.RotateLeft();
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            characterMotor.RotateRight();
-        }
+        HandleInput();
 
         UpdateProjection();
 
     }
 
+    private void HandleInput()
+    {
+        if (!controlsEnabled) return;
+        if (Input.GetKey(KeyCode.W))
+        {
+            characterMotor.MoveForward(GameSettings.instance.data.playerMoveSpeed);
+        }
+        if (Input.GetKey(KeyCode.A))
+        {
+            characterMotor.Rotate(-GameSettings.instance.data.playerRotate);
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            characterMotor.Rotate(GameSettings.instance.data.playerRotate);
+        }
+    }
+
     private void UpdateProjection()
     {
         if (projectionLine == null) return;
-        projectionLine.SetPosition(0, playerCharacterTransform.position + projectionLineOffset);
-        
+        projectionLine.SetPosition(0, playerCharacterTransform.position + projectionLineOffset);        
         
 
         Ray ray = new Ray(playerCharacterTransform.position, Vector3.down);
         RaycastHit raycastHit;
-        if (Physics.Raycast(ray, out raycastHit, 100f, whatIsProjectionLineTargets))
+        if (Physics.Raycast(ray, out raycastHit, 100f, whatIsProjectionTargets))
         {
 
             projectionLine.SetPosition(1, raycastHit.point);
             projectionSpot.position = raycastHit.point;
-            projectionLine.material.color = colorHitted;
+            projectionLine.material.color = colorProjectionHitted;
 
         }
         else
         {
-            projectionLine.SetPosition(1, playerCharacterTransform.up * -100f);
-            projectionSpot.position = playerCharacterTransform.up * -100f;
-            projectionLine.material.color = colorNotHitted;
+            projectionLine.SetPosition(1, playerCharacterTransform.up * -10000f);
+            projectionSpot.position = playerCharacterTransform.up * -10000f;
+            projectionLine.material.color = colorProjectionNotHitted;
         }
     }
+
+    #region signals
+    public void HandleSignal(SignalControlEnabled arg)
+    {
+        controlsEnabled = arg.value;
+    }
+
+    private void OnEnable()
+    {
+        ProcessSignal.Default.Add(this);
+    }
+    private void OnDisable()
+    {
+        ProcessSignal.Default.Remove(this);
+    }
+
+    public void HandleSignal(SignalPlayerSpawned arg)
+    {
+        Init(arg.player);
+    }
+    #endregion
 }

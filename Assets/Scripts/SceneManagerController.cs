@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class SceneManagerController : MonoBehaviour, IReceive<SignalLoadScene>
 {
-    private const string loaderSceneName = "loader";
+    [SerializeField] string loaderSceneName = "loader";
     public static SceneManagerController Instance;    
     
     void Awake()
@@ -34,4 +34,3 @@ public class SceneManagerController : MonoBehaviour, IReceive<SignalLoadScene>
         ProcessSignal.Default.Remove(this);
     }
 }
-public struct SignalLoadScene { public string name; }
