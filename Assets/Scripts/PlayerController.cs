@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IReceive<SignalControlEnabled>, IReceive<SignalPlayerSpawned>
+public class PlayerController : MonoBehaviour, IReceive<SignalControlEnabled>, IReceive<SignalCharSpawned>
 {
 
     [SerializeField] CharController characterMotor;
@@ -38,15 +38,15 @@ public class PlayerController : MonoBehaviour, IReceive<SignalControlEnabled>, I
         if (!controlsEnabled) return;
         if (Input.GetKey(KeyCode.W))
         {
-            characterMotor.MoveForward(GameSettings.instance.data.playerMoveSpeed);
+            characterMotor.MoveForward(GameSettings.instance.data.playerMoveSpeed * 60f * Time.deltaTime);
         }
         if (Input.GetKey(KeyCode.A))
         {
-            characterMotor.Rotate(-GameSettings.instance.data.playerRotate);
+            characterMotor.Rotate(-GameSettings.instance.data.playerRotate * 60f * Time.deltaTime);
         }
         if (Input.GetKey(KeyCode.D))
         {
-            characterMotor.Rotate(GameSettings.instance.data.playerRotate);
+            characterMotor.Rotate(GameSettings.instance.data.playerRotate * 60f * Time.deltaTime);
         }
     }
 
@@ -89,9 +89,12 @@ public class PlayerController : MonoBehaviour, IReceive<SignalControlEnabled>, I
         ProcessSignal.Default.Remove(this);
     }
 
-    public void HandleSignal(SignalPlayerSpawned arg)
+    public void HandleSignal(SignalCharSpawned arg)
     {
-        Init(arg.player);
+        if (arg.charController.isPlayer)
+        {
+            Init(arg.charController);
+        }
     }
     #endregion
 }

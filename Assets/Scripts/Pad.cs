@@ -4,11 +4,14 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.Events;
 using DG.Tweening;
+using System;
+
 [RequireComponent(typeof(Collider))]
 public class Pad : MonoBehaviour
 {
     public UnityEvent OnHit;
     public UnityEvent OnHitFirstTime;
+    public UnityEvent OnReset;
 
     [SerializeField] PadType padType;
     [SerializeField] int padNumber;
@@ -18,49 +21,65 @@ public class Pad : MonoBehaviour
     Collider col;
     Vector3 forceDir;
     public PadType Type { get => padType; }
-    public int PadNumber { get => padNumber; }
+    public bool AlreadyHit { get => alreadyHit; }
+    public int PadNumber { get => padNumber;  }
 
     MeshRenderer[] meshRenderers;
     Quaternion[] meshRenderersRotations;
     Vector3[] meshRenderersPositions;
+    Vector3[] meshRenderersScales;
 
     private void Awake()
     {
+        if (padType == PadType.Destructable || padType == PadType.Persistant)
+        {
+            int.TryParse(transform.name.Split(' ')[1], out padNumber);
+
+            numberView.text = transform.name.Split(' ')[1];
+        }
         col = GetComponent<Collider>();
-        forceDir = Vector3.up;
+        forceDir = transform.up;
+        
         meshRenderers = transform.GetComponentsInChildren<MeshRenderer>();
         meshRenderersRotations = new Quaternion[meshRenderers.Length];
         meshRenderersPositions = new Vector3[meshRenderers.Length];
-    }
-    
-    void SavePositions()
-    {
+        meshRenderersScales = new Vector3[meshRenderers.Length];
+
         for (int i = 0; i < meshRenderers.Length; i++)
         {
-            meshRenderersPositions[i] =  meshRenderers[i].transform.position;
+            meshRenderersPositions[i] = meshRenderers[i].transform.position;
             meshRenderersRotations[i] = meshRenderers[i].transform.rotation;
+            meshRenderersScales[i] = meshRenderers[i].transform.localScale;
         }
     }
-    public void DoReset()
+
+    internal void AlignNumber(Transform t)
+    {
+        Transform number = transform.Find("hint_container");
+        if (number == null) return;
+        number.LookAt(t);
+        Vector3 euler = number.eulerAngles;
+        euler.x = 0;
+        euler.z = 0;
+        number.eulerAngles = euler;
+    }
+    /// <summary>
+    /// reseting pad condition whithout re-inst
+    /// </summary>
+    public void ResetPad()
     {
         for (int i = 0; i < meshRenderers.Length; i++)
         {
             meshRenderers[i].transform.position = meshRenderersPositions[i];
             meshRenderers[i].transform.rotation = meshRenderersRotations[i];
+            meshRenderers[i].transform.localScale = meshRenderersScales[i];
         }
         col.enabled = true;
         alreadyHit = false;
-        transform.gameObject.SetActive(false);
-        transform.gameObject.SetActive(true);
+        OnReset.Invoke();
+
     }
-    public void InitNumber(int number)
-    {        
-        padNumber = number;
-        if (numberView != null)
-        {
-            numberView.text = padNumber.ToString();
-        }
-    }
+
     private void OnCollisionEnter(Collision collision)
     {
         HandleCollision(collision);
@@ -73,15 +92,11 @@ public class Pad : MonoBehaviour
             charController.OnEnterPadZone();
         }
     }
-    private void OnTriggerExit(Collider other)
-    {
-        var charController = other.gameObject.GetComponent<CharController>();
-        if (charController != null)
-        {
-            charController.OnExitPadZone();
-        }
-    }
-
+    /// <summary>
+    /// helper method to detect accuracy of jump
+    /// </summary>
+    /// <param name="collision"></param>
+    /// <returns>distance from center</returns>
     float CalcHorizontalDistance(Collision collision)
     {
         Vector3 v1= collision.collider.transform.position;
@@ -95,49 +110,50 @@ public class Pad : MonoBehaviour
     {
         CharController charController = collision.collider.gameObject.GetComponent<CharController>();
         if (charController == null) return;
-
+        
         OnHit.Invoke();
 
         float distanceToCenterOfPad = CalcHorizontalDistance(collision);
-
-        if (!alreadyHit)
-        {
-            OnHitFirstTime.Invoke();
-            ProcessSignal.Default.Send(new SignalHitPad {charController = charController, pad = this, dist = distanceToCenterOfPad });
-
-            alreadyHit = true;
-        }
-
-        charController.HitByPad(padType, forceDir);
-
-        if (charController.isPlayer && padType == PadType.Destructable)
-        {
-            Destruct();           
-        }
+        ProcessSignal.Default.Send(new SignalHitPad { charController = charController, pad = this, dist = distanceToCenterOfPad });
         
+        charController.HitByPad(padType, forceDir, collision.impulse);
+
+        if (charController.isPlayer )
+        {
+            OnHit.Invoke();
+            if (!alreadyHit)
+            {
+                OnHitFirstTime.Invoke();
+                alreadyHit = true;
+            }
+            if (padType == PadType.Destructable)
+                Destruct();
+        }       
             
     }
+
+    /// <summary>
+    /// decomposition of a destructable pad
+    /// </summary>
     public void Destruct()
     {
         var cells = transform.GetComponentsInChildren<Renderer>();
         foreach (var item in cells)
         {
-            item.gameObject.AddComponent<SphereCollider>();
+            Collider col = item.gameObject.AddComponent<SphereCollider>();
 
             var rb = item.gameObject.AddComponent<Rigidbody>();
             rb.isKinematic = false;
             rb.mass = 0;
 
-            rb.transform.SetParent ( transform.parent.parent);
 
             rb.transform.DOScale(0.1f, 2).OnComplete( delegate {
                 Destroy(rb);
-                gameObject.SetActive(false);
+                Destroy(col);
                 });
         }
         col.enabled = false;
     }
-
 }
 
 public enum PadType

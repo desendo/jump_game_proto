@@ -6,8 +6,8 @@ using UnityEngine;
 public class Data : ScriptableObject
 {
     public float bottomPadJumpForce;
-    public float percistantPadJumpForce;
-    public float destructablePadJumpForce;
+    public float percistantPadJumpImpulse;
+    public float destructablePadJumpImpulse;
     public float playerMoveSpeed;
     public float playerRotate;
     public float cameraZoomSpeed;

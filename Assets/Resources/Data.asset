@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b863961cb8c3c094297611bb41648e65, type: 3}
   m_Name: Data
   m_EditorClassIdentifier: 
-  bottomPadJumpForce: 1300
-  percistantPadJumpForce: 500
-  destructablePadJumpForce: 800
-  playerMoveSpeed: 0.06
+  bottomPadJumpForce: 2
+  percistantPadJumpImpulse: 9.6
+  destructablePadJumpImpulse: 16.6
+  playerMoveSpeed: 0.065
   playerRotate: 2
   cameraZoomSpeed: 0.1
   perfectDistance: 0.3

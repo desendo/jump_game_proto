@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
-public class CameraFollow : MonoBehaviour, IReceive<SignalPlayerSpawned>, IReceive<SignalHitPad>
+public class CameraFollow : MonoBehaviour, IReceive<SignalCharSpawned>, IReceive<SignalHitPad>
 {
     [Range(0f,1f)]
     [SerializeField] float lerpFactor = 0.1f;
@@ -63,10 +63,7 @@ public class CameraFollow : MonoBehaviour, IReceive<SignalPlayerSpawned>, IRecei
     {
         cam.transform.DOShakePosition(0.3f, strength,30);
     }
-    private void SetCameraDistance(object p)
-    {
-        throw new NotImplementedException();
-    }
+
 
     private void LateUpdate()
     {
@@ -85,12 +82,16 @@ public class CameraFollow : MonoBehaviour, IReceive<SignalPlayerSpawned>, IRecei
         ProcessSignal.Default.Remove(this);
     }
 
-    public void HandleSignal(SignalPlayerSpawned arg)
+    public void HandleSignal(SignalCharSpawned arg)
     {
-        targetTransform = arg.player.transform;
+        if (arg.charController.isPlayer)
+        {
+            targetTransform = arg.charController.transform;
+        }
     }
     public void HandleSignal(SignalHitPad arg)
     {
+        if (!arg.charController.isPlayer) return;
         if (arg.pad.Type == PadType.Destructable)
             Shake(1);
         else if (arg.pad.Type == PadType.Persistant)
