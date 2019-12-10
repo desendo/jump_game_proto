@@ -57,7 +57,7 @@ public class UIController : MonoBehaviour
 
         Sequence messageSequence = DOTween.Sequence();
 
-        messageSequence.Append(mes.rectTransform.DOAnchorPos(targetPos, 1f))
+        messageSequence.Append(mes.rectTransform.DOScale(1.5f, 1f))
           .Insert(0.5f, mes.DOFade(0, 0.5f)).OnComplete(delegate
           {
               SimplePool.Despawn(mes.gameObject);

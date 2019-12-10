@@ -86,8 +86,8 @@ public class CharController : MonoBehaviour,IReceive<SignalFirstRank>
 
     internal void HitByPad(PadType padType, Vector3 forceDir, Vector3 impulse)
     {
-        
 
+        if (isPlayer) forceDir *= 1.1f;
         if (padType == PadType.Persistant)
         {
             AddImpulse(GameSettings.instance.data.percistantPadJumpImpulse * forceDir);

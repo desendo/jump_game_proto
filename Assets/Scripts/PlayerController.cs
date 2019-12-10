@@ -32,21 +32,35 @@ public class PlayerController : MonoBehaviour, IReceive<SignalControlEnabled>, I
         UpdateProjection();
 
     }
-
+    float rotateControlSpeed;
+    float rotateControlSpeedAccels = 5f;
     private void HandleInput()
     {
         if (!controlsEnabled) return;
+
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A))
+        {
+            rotateControlSpeed += Time.deltaTime * rotateControlSpeedAccels;
+            if (Input.GetKey(KeyCode.D))
+            {
+                characterMotor.Rotate(GameSettings.instance.data.playerRotate * 60f * Time.deltaTime * rotateControlSpeed);
+            }
+            if (Input.GetKey(KeyCode.A))
+            {
+                characterMotor.Rotate(-GameSettings.instance.data.playerRotate * 60f * Time.deltaTime * rotateControlSpeed);
+            }
+        }
+        else
+            rotateControlSpeed -= Time.deltaTime * rotateControlSpeedAccels;
+
+        if (rotateControlSpeed > 1) rotateControlSpeed = 1;
+        if (rotateControlSpeed < 0) rotateControlSpeed = 0;
+
         if (Input.GetKey(KeyCode.W))
         {
             characterMotor.MoveForward(GameSettings.instance.data.playerMoveSpeed * 60f * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            characterMotor.Rotate(-GameSettings.instance.data.playerRotate * 60f * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            characterMotor.Rotate(GameSettings.instance.data.playerRotate * 60f * Time.deltaTime);
+
+            
         }
     }
 
